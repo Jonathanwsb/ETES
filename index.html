@@ -89,7 +89,7 @@
 
   /* ---------- Popup (tabela de atributos) ---------- */
   .leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; }
-  .leaflet-popup-content { margin: 0; font-family: var(--font); }
+  .leaflet-popup-content { margin: 0; font-family: var(--font); width: auto !important; }
   .pop-head { background: var(--ink); color: #fff; padding: 10px 34px 10px 14px; font-size: 14px; font-weight: 650; }
   .rec { padding: 10px 12px 12px; }
   .rec + .rec { border-top: 3px solid var(--ink); }
@@ -111,6 +111,27 @@
   }
   .sv:hover { background: #226a8b; }
   .leaflet-container a.sv { color: #fff; }
+  .sec { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .sec a, .sec button {
+    appearance: none; font: inherit; font-size: 12.5px; font-weight: 600; text-align: center; cursor: pointer;
+    padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+    text-decoration: none; line-height: 1.25;
+  }
+  .sec a:hover, .sec button:hover { background: #e9f1ef; }
+  .leaflet-container .sec a { color: var(--ink-2); }
+  .hint { font-size: 11.5px; color: var(--muted); margin: 8px 2px 0; line-height: 1.35; }
+  .pick-banner {
+    position: absolute; z-index: 1100; top: 12px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; border-radius: 10px; padding: 10px 12px 10px 14px; font-size: 13.5px;
+    box-shadow: 0 6px 24px rgba(5,20,26,.45); display: none; align-items: center; gap: 12px; max-width: calc(100% - 24px);
+  }
+  .pick-banner.on { display: flex; }
+  .pick-banner button {
+    appearance: none; border: 1px solid #3b6572; background: transparent; color: #dcebef; font: inherit; font-size: 12.5px;
+    padding: 5px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+  }
+  .pick-banner button:hover { background: var(--ink-2); }
+  body.picking #map, body.picking .leaflet-interactive { cursor: crosshair; }
 
   .leaflet-tooltip.tip { font-family: var(--font); font-weight: 600; font-size: 12.5px; color: var(--ink); border: 0; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
 
@@ -124,6 +145,11 @@
 </head>
 <body>
 <div id="map"></div>
+
+<div class="pick-banner" id="pick-banner" role="status">
+  <span id="pick-text"></span>
+  <button type="button" id="pick-cancel">Cancelar</button>
+</div>
 
 <section class="panel" id="panel" aria-label="Filtro e lista de ETEs">
   <div class="panel-head">
@@ -144,7 +170,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const DATA = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"fid": null, "NOME": "ETE ORQUÍDEA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.4154824, -22.7309826]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JOINVILLE", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.3477687, -22.7134306]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PANORAMA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.4240017, -22.7120413]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SARAPUÍ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3465595, -22.755506]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE RODOLFO GONÇALVES", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.3713994, -22.0341854]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE FIGUEIRA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3072659, -22.678607]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JARDIM GRAMACHO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2832504, -22.7488017]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE CABUÇU", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8983639, -22.8193019]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO JOSÉ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8863327, -22.8405997]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE CURUZU", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8568506, -22.8378408]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE GRANDE RIO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.9477743, -22.7250726]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE APOLLO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.9428057, -22.7805095]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE LAGOA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.0456052, -22.646023]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE MAUA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.1579821, -22.7076052]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SARAPUÍ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3465595, -22.755506]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE MIRACEMA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.2090218, -21.4362027]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO JORGE", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.5594272, -22.6908579]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE QUEIMADOS", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.634297, -22.7267494]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JARDIM CATARINA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.0086554, -22.796487]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO GONÇALO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.0621595, -22.8027835]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PINHÃO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.7294537, -22.7359157]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE LAGOINHA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.5892758, -22.7984203]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "FOSSA PARAIBA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.3794447, -21.7532938]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE APERIBÉ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.0970288, -21.6254987]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PAVUNA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3070969, -22.8022857]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PENHA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2685468, -22.8328644]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE ILHA DO GOVERNADOR", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.1874038, -22.795857]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE ALEGRIA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2273667, -22.8730932]}}]};
+const DATA = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"fid": null, "NOME": "ETE ORQUÍDEA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.4154824, -22.7309826]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JOINVILLE", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.3477687, -22.7134306]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PANORAMA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.4240017, -22.7120413]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SARAPUÍ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3465595, -22.755506]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE RODOLFO GONÇALVES", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.3713994, -22.0341854]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE FIGUEIRA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3072659, -22.678607]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JARDIM GRAMACHO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2832504, -22.7488017]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE CABUÇU", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8983639, -22.8193019]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO JOSÉ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8863327, -22.8405997]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE CURUZU", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.8568506, -22.8378408]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE GRANDE RIO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.9477743, -22.7250726]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE APOLLO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.9428057, -22.7805095]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE LAGOA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.0456052, -22.646023]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE MAUA", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.1579821, -22.7076052]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE MIRACEMA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.2090218, -21.4362027]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO JORGE", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.5594272, -22.6908579]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE QUEIMADOS", "SITUACAO": "Inoperante"}, "geometry": {"type": "Point", "coordinates": [-43.634297, -22.7267494]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE JARDIM CATARINA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.0086554, -22.796487]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE SÃO GONÇALO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.0621595, -22.8027835]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PINHÃO", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.7294537, -22.7359157]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE LAGOINHA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.5892758, -22.7984203]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "FOSSA PARAIBA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.3794447, -21.7532938]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE APERIBÉ", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-42.0970288, -21.6254987]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PAVUNA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.3070969, -22.8022857]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE PENHA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2685468, -22.8328644]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE ILHA DO GOVERNADOR", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.1874038, -22.795857]}}, {"type": "Feature", "properties": {"fid": null, "NOME": "ETE ALEGRIA", "SITUACAO": "Operante"}, "geometry": {"type": "Point", "coordinates": [-43.2273667, -22.8730932]}}]};
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => n.toLocaleString('pt-BR', {minimumFractionDigits: 6, maximumFractionDigits: 6});
@@ -196,6 +222,7 @@ function pinIcon(status) {
 
 function recordHtml(f, n, total) {
   const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${f.lat},${f.lon}`;
+  const gmUrl = `https://www.google.com/maps/@?api=1&map_action=map&center=${f.lat},${f.lon}&zoom=18&basemap=satellite`;
   const fidCell = f.fid == null ? '<td class="null">NULL</td>' : `<td>${esc(f.fid)}</td>`;
   return `<div class="rec">
     ${total > 1 ? `<p class="rec-title">Registro ${n} de ${total} neste local</p>` : ''}
@@ -207,6 +234,10 @@ function recordHtml(f, n, total) {
       <tr class="calc"><th>Longitude</th><td>${fmt(f.lon)}</td></tr>
     </table>
     <a class="sv" href="${svUrl}" target="_blank" rel="noopener">Abrir no Street View</a>
+    <div class="sec">
+      <button type="button" data-pick="${f.i}">Sem imagem? Escolher ponto próximo</button>
+      <a href="${gmUrl}" target="_blank" rel="noopener">Ver no Google Maps</a>
+    </div>
   </div>`;
 }
 
@@ -301,6 +332,38 @@ document.getElementById('toggle').addEventListener('click', e => {
   e.target.textContent = c ? 'Mostrar filtros' : 'Ocultar filtros';
   e.target.setAttribute('aria-expanded', String(!c));
 });
+
+/* ---------- Escolher ponto próximo para o Street View ---------- */
+let pickFeat = null;
+const banner = document.getElementById('pick-banner');
+function svLink(lat, lon) { return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`; }
+function stopPick() {
+  pickFeat = null;
+  document.body.classList.remove('picking');
+  banner.classList.remove('on');
+}
+function startPick(i) {
+  pickFeat = feats[i];
+  map.closePopup();
+  document.body.classList.add('picking');
+  document.getElementById('pick-text').textContent =
+    `Clique numa rua ou estrada próxima de ${pickFeat.nome} para abrir o Street View naquele ponto.`;
+  banner.classList.add('on');
+  // aproxima o mapa para facilitar o clique
+  if (map.getZoom() < 17) map.flyTo([pickFeat.lat, pickFeat.lon], 17, { duration: .6 });
+}
+map.on('click', e => {
+  if (!pickFeat) return;
+  window.open(svLink(e.latlng.lat.toFixed(7), e.latlng.lng.toFixed(7)), '_blank', 'noopener');
+  stopPick();
+});
+map.on('popupopen', e => {
+  stopPick();
+  e.popup.getElement().querySelectorAll('[data-pick]').forEach(b =>
+    b.addEventListener('click', () => startPick(+b.dataset.pick)));
+});
+document.getElementById('pick-cancel').addEventListener('click', stopPick);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') stopPick(); });
 
 render(true);
 </script>
